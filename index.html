@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English-Chinese Matching Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            margin: 20px;
+            align-items: flex-start;
+            position: relative;
+        }
+
+        .word-table-container {
+            flex: 1;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: white;
+        }
+
+        .word-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .word-table th,
+        .word-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .word-table th {
+            background-color: #f4f4f4;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .word-table tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .game-container {
+            display: none;
+            /* 初始隐藏 */
+            flex: 1;
+            max-height: 80vh;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: white;
+            overflow-y: auto;
+            position: relative;
+            /* 添加这一行 */
+        }
+
+        .game-content {
+            display: flex;
+            gap: 50px;
+            /* 调整间隔为 50px，您可以根据需要进一步减小 */
+            padding: 10px;
+        }
+
+        .column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .word {
+            padding: 10px 20px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            /* 加粗 */
+            font-size: 20px;
+        }
+
+        .word.selected {
+            background-color: #e0f7fa;
+            border-color: #0097a7;
+        }
+
+        .line {
+            position: absolute;
+            border: 2px solid blue;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        #startGameBtn,
+        #resetSelectionBtn {
+            padding: 10px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            min-width: 80px;
+            display: none;
+            /* 初始隐藏开始按钮 */
+        }
+
+        #startGameBtn:hover,
+        #resetSelectionBtn:hover {
+            background-color: #45a049;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 美化滚动条样式 */
+        .word-table-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .word-table-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .word-table-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .word-table-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* 美化游戏容器滚动条 */
+        .game-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .game-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .game-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .game-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+
+
+
+        .file-input-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        #csvFileInput {
+            display: none;
+            /* 隐藏原始文件输入 */
+        }
+
+        .custom-file-input {
+            padding: 10px 10px;
+            background-color: #4CAF50;
+            /* 按钮背景颜色 */
+            color: white;
+            /* 按钮文字颜色 */
+            border: none;
+            /* 无边框 */
+            border-radius: 5px;
+            /* 圆角 */
+            cursor: pointer;
+            /* 鼠标指针 */
+            font-size: 16px;
+            /* 字体大小 */
+            display: flex;
+            /* 使用 flex 布局 */
+            align-items: center;
+            /* 垂直居中 */
+            gap: 10px;
+            /* 按钮内图标与文字间距 */
+        }
+
+        .custom-file-input i {
+            font-size: 20px;
+            /* 图标大小 */
+        }
+
+        .word-checkbox {
+            width: 20px;
+            /* 设置复选框宽度 */
+            height: 20px;
+            /* 设置复选框高度 */
+        }
+
+
+
+        .star-button {
+            width: 100px;
+            /* 设置宽度 */
+            height: 100px;
+            /* 设置高度 */
+            background-color: #4c54af;
+            /* 按钮背景颜色 */
+            color: white;
+            /* 按钮文字颜色 */
+            border: none;
+            /* 无边框 */
+            border-radius: 8px;
+            /* 圆角 */
+            cursor: pointer;
+            /* 鼠标指针 */
+            font-size: 16px;
+            /* 字体大小 */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            /* 阴影效果 */
+            transition: all 0.3s ease;
+            /* 过渡效果 */
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            /* 星形 */
+        }
+
+        .star-button:hover {
+            background-color: #45a049;
+            /* 悬停时的背景颜色 */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            /* 悬停时的阴影效果 */
+        }
+
+        @keyframes shake {
+            0% {
+                transform: translate(0);
+            }
+
+            25% {
+                transform: translate(-5px, 0);
+            }
+
+            50% {
+                transform: translate(5px, 0);
+            }
+
+            75% {
+                transform: translate(-5px, 0);
+            }
+
+            100% {
+                transform: translate(0);
+            }
+        }
+
+        .shaking-button:hover {
+            animation: shake 0.5s;
+            /* 设置抖动动画 */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="input-container">
+        <div class="file-input-container">
+            <input type="file" id="csvFileInput" accept=".csv">
+            <label for="csvFileInput" class="custom-file-input">导入单词</label>
+            
+        </div>
+        <select id="unitSelect"></select>
+        <button id="startGameBtn" class="blinking-button shaking-button" style="display: none;">ready?go!</button>
+        <button id="resetSelectionBtn" class="blinking-button shaking-button" style="display: none;">重新选择</button>
+
+        <input type="text" id="englishInput" placeholder="输入英文单词" style="display: none;">
+        <input type="text" id="chineseInput" placeholder="输入中文翻译" style="display: none;">
+        <button id="addButton" style="display: none;">添加</button>
+    </div>
+   
+    <div class="container">
+        <div class="word-table-container">
+            <table class="word-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAll"></th>
+                        <th>单元</th>
+                        <th>英文</th>
+                        <th>中文</th>
+                    </tr>
+                </thead>
+                <tbody id="wordTableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="game-container" style="display: none;">
+            <div class="game-content">
+                <div class="column" id="englishColumn"></div>
+                <div class="column" id="chineseColumn"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let startTime; // 游戏开始时间
+        let endTime; // 游戏结束时间
+        let totalWords = 0; // 总单词数
+        let successfulMatches = 0; // 成功匹配的数量
+        let failedMatches = 0; // 失败的数量
+        let wordPairs = [
+            ["apple", "苹果"],
+            ["banana", "香蕉"],
+            ["cherry", "樱桃"]
+        ];
+        let wordPairsByUnit = new Map();
+        let lines = [];
+        const englishColumn = document.getElementById('englishColumn');
+        const chineseColumn = document.getElementById('chineseColumn');
+        let selectedEnglish = null;
+        let selectedElement = null;
+        const matchedWords = new Set();
+        const englishInput = document.getElementById('englishInput');
+        const chineseInput = document.getElementById('chineseInput');
+        const addButton = document.getElementById('addButton');
+        let isCheckboxSelecting = false; // 用于跟踪是否正在选择复选框
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function displayWords() {
+            englishColumn.innerHTML = '';
+            chineseColumn.innerHTML = '';
+            lines.forEach(item => item.line.parentNode.removeChild(item.line));
+            lines.length = 0;
+            matchedWords.clear();
+
+            const englishWords = wordPairs.map(pair => pair[0]);
+            const chineseWords = wordPairs.map(pair => pair[1]);
+
+            shuffleArray(englishWords);
+            shuffleArray(chineseWords);
+
+            englishWords.forEach(word => {
+                const div = document.createElement('div');
+                div.classList.add('word');
+                div.textContent = word;
+                div.addEventListener('click', () => handleWordClick(word, div, 'english'));
+                englishColumn.appendChild(div);
+            });
+
+            chineseWords.forEach(word => {
+                const div = document.createElement('div');
+                div.classList.add('word');
+                div.textContent = word;
+                div.addEventListener('click', () => handleWordClick(word, div, 'chinese'));
+                chineseColumn.appendChild(div);
+            });
+        }
+
+        function removeSelection() {
+            if (selectedElement) {
+                selectedElement.classList.remove('selected');
+            }
+        }
+
+        const gameContainer = document.querySelector('.game-container');
+
+        gameContainer.addEventListener('scroll', updateLinesPosition);
+
+        function updateLinesPosition() {
+            lines.forEach(item => {
+                const englishElement = Array.from(gameContainer.querySelectorAll('.word')).find(el => el.textContent === item.english);
+                const chineseElement = Array.from(gameContainer.querySelectorAll('.word')).find(el => el.textContent === item.chinese);
+
+                if (englishElement && chineseElement) {
+                    const englishRect = englishElement.getBoundingClientRect();
+                    const chineseRect = chineseElement.getBoundingClientRect();
+
+                    const containerRect = gameContainer.getBoundingClientRect();
+                    const startX = englishRect.right - containerRect.left + gameContainer.scrollLeft;
+                    const startY = englishRect.top + (englishRect.height / 2) - containerRect.top + gameContainer.scrollTop;
+                    const endX = chineseRect.left - containerRect.left + gameContainer.scrollLeft;
+                    const endY = chineseRect.top + (chineseRect.height / 2) - containerRect.top + gameContainer.scrollTop;
+
+                    const length = Math.sqrt((endX - startX) ** 2 + (endY - startY) ** 2);
+
+                    item.line.style.left = `${startX}px`;
+                    item.line.style.top = `${startY}px`;
+                    item.line.style.width = `${length}px`;
+                    item.line.style.transform = `rotate(${Math.atan2(endY - startY, endX - startX)}rad)`;
+                    item.line.style.transformOrigin = '0 0';
+                }
+            });
+        }
+
+        function handleWordClick(word, element, type) {
+            if (matchedWords.has(word)) {
+                const index = lines.findIndex(item => item.english === word || item.chinese === word);
+                if (index !== -1) {
+                    const line = lines[index].line;
+                    line.parentNode.removeChild(line);
+                    matchedWords.delete(lines[index].english);
+                    matchedWords.delete(lines[index].chinese);
+                    lines.splice(index, 1);
+                }
+                removeSelection();
+                selectedEnglish = null;
+                selectedElement = null;
+                return;
+            }
+
+            if (type === 'english') {
+                removeSelection();
+                element.classList.add('selected');
+                selectedElement = element;
+                selectedEnglish = { word, element };
+            } else {
+                if (selectedEnglish) {
+                    const line = document.createElement('div');
+                    line.classList.add('line');
+                    gameContainer.appendChild(line);
+
+                    lines.push({
+                        line,
+                        english: selectedEnglish.word,
+                        chinese: word
+                    });
+
+                    matchedWords.add(selectedEnglish.word);
+                    matchedWords.add(word);
+                    updateLinesPosition();
+                    removeSelection();
+                    selectedEnglish = null;
+                    // 所有单词都连线了，检查所有结果
+                    if (lines.length === wordPairs.length) {
+                        endTime = new Date();
+                        checkMatches();                     
+                        calculateResults();
+                    }
+                } else {
+                    removeSelection();
+                    element.classList.add('selected');
+                    selectedElement = element;
+                }
+            }
+        }
+
+        async function checkMatches() {
+            lines.forEach(item => {
+                const isCorrect = wordPairs.some(pair => pair[0] === item.english && pair[1] === item.chinese);
+                item.line.style.borderColor = isCorrect ? 'green' : 'red';
+            });
+        await new Promise(resolve => setTimeout(resolve, 10));
+            
+        }
+        function calculateResults() {
+            totalWords = wordPairs.length; // 假设 wordPairs 存储了所有单词对
+            successfulMatches = lines.filter(item => {
+                return wordPairs.some(pair => pair[0] === item.english && pair[1] === item.chinese);
+            }).length; // 计算成功匹配的数量
+            failedMatches = totalWords - successfulMatches; // 计算失败的数量
+
+            const timeTaken = Math.floor((endTime - startTime) / 1000); // 计算用时（秒）
+            const minutes = Math.floor(timeTaken / 60); // 分钟
+            const seconds = timeTaken % 60; // 秒
+            const resultDiv = document.createElement('div');
+            resultDiv.style.position = 'fixed';
+            resultDiv.style.top = '50%';
+            resultDiv.style.left = '50%';
+            resultDiv.style.transform = 'translate(-50%, -50%)';
+            resultDiv.style.backgroundColor = 'white';
+            resultDiv.style.border = '1px solid #ddd';
+            resultDiv.style.borderRadius = '5px';
+            resultDiv.style.padding = '20px';
+            resultDiv.style.zIndex = '1000';
+            resultDiv.innerHTML = `
+                <h2>游戏结果</h2>
+                <p>单词数：${totalWords}</p>
+                <p>成功：${successfulMatches}</p>
+                <p>失败：${failedMatches}</p>
+                <p>用时：${minutes}分钟${seconds}秒</p>
+                <button id="closeResultBtn">关闭</button>
+            `;
+            document.body.appendChild(resultDiv);
+
+            document.getElementById('closeResultBtn').addEventListener('click', () => {
+                document.body.removeChild(resultDiv);
+            });
+
+            // // 显示结果
+            // alert(`单词数：${totalWords}，成功：${successfulMatches}，失败：${failedMatches}，用时：${minutes}分钟${seconds}秒`);
+        }
+
+        function addWordPair() {
+            const english = englishInput.value.trim();
+            const chinese = chineseInput.value.trim();
+
+            if (english && chinese) {
+                const exists = wordPairs.some(pair => pair[0].toLowerCase() === english.toLowerCase());
+                if (exists) {
+                    alert(`${english} 已存在`);
+                    return;
+                }
+
+                wordPairs.push([english, chinese]);
+                displayWords();
+                englishInput.value = '';
+                chineseInput.value = '';
+            }
+        }
+
+        addButton.addEventListener('click', addWordPair);
+
+        document.getElementById('startGameBtn').addEventListener('click', function () {
+            const selectedWords = getSelectedWords();
+            if (selectedWords.length < 2) {
+                alert('请至少选择2个单词进行游戏');
+                return;
+            }
+
+            wordPairs = selectedWords.map(word => [word.english, word.chinese]);
+
+
+            document.querySelector('.word-table-container').style.display = 'none';
+            document.querySelector('.file-input-container').style.display = 'none';
+            document.getElementById('unitSelect').style.display = 'none';
+
+            document.querySelector('.game-container').style.display = 'block';
+            this.textContent = '再来一次';
+            document.getElementById('resetSelectionBtn').style.display = 'inline-block';
+            displayWords();
+            // 记录开始时间
+            startTime = new Date();
+        });
+
+        displayWords();
+
+        function updateWordTable() {
+            const tbody = document.getElementById('wordTableBody');
+            tbody.innerHTML = '';
+
+            Array.from(wordPairsByUnit.entries()).forEach(([unit, pairs]) => {
+                pairs.forEach(([english, chinese]) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><input type="checkbox" class="word-checkbox"></td>
+                        <td>${unit}</td>
+                        <td>${english}</td>
+                        <td>${chinese}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            });
+
+            const checkboxes = document.querySelectorAll('.word-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function () {
+                    const row = this.closest('tr');
+                    if (this.checked) {
+                        row.classList.add('selected-row');
+                    } else {
+                        row.classList.remove('selected-row');
+                    }
+                });
+            });
+        }
+
+        function getSelectedWords() {
+            const selectedWords = [];
+            const rows = document.querySelectorAll('#wordTableBody tr');
+
+            rows.forEach(row => {
+                const checkbox = row.querySelector('.word-checkbox');
+                if (checkbox && checkbox.checked) {
+                    const cells = row.querySelectorAll('td');
+                    selectedWords.push({
+                        unit: cells[1].textContent,
+                        english: cells[2].textContent,
+                        chinese: cells[3].textContent
+                    });
+                }
+            });
+
+            return selectedWords;
+        }
+        function loadWordData(text) {
+            const rows = text.split('\n')
+                .map(row => row.trim())
+                .filter(row => row.length > 0)
+                .map(row => row.split(',').map(cell => cell.trim()));
+
+            wordPairsByUnit.clear();
+
+            rows.slice(1).forEach(row => {
+                if (row.length >= 3) {
+                    const [unit, english, chinese] = row;
+                    if (!wordPairsByUnit.has(unit)) {
+                        wordPairsByUnit.set(unit, []);
+                    }
+                    wordPairsByUnit.get(unit).push([english, chinese]);
+                }
+            });
+
+            updateWordTable();
+            updateUnitSelect();
+            document.getElementById('startGameBtn').style.display = 'inline-block'; // 显示开始按钮
+
+        }
+        function handleCSVFile(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                const text = e.target.result;
+                loadWordData(text);
+            };
+
+            reader.readAsText(file);
+        }
+
+        document.getElementById('selectAll').addEventListener('change', function (e) {
+            const checkboxes = document.querySelectorAll('.word-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = e.target.checked;
+                const row = checkbox.closest('tr');
+                if (e.target.checked) {
+                    row.classList.add('selected-row');
+                } else {
+                    row.classList.remove('selected-row');
+                }
+            });
+        });
+
+        function updateUnitSelect() {
+            const unitSelect = document.getElementById('unitSelect');
+            if (!unitSelect) return;
+
+            unitSelect.innerHTML = '<option value="all">所有单元</option>';
+
+            Array.from(wordPairsByUnit.keys()).forEach(unit => {
+                const option = document.createElement('option');
+                option.value = unit;
+                option.textContent = unit;
+                unitSelect.appendChild(option);
+            });
+        }
+
+        document.getElementById('csvFileInput').addEventListener('change', handleCSVFile);
+
+        document.getElementById('resetSelectionBtn').addEventListener('click', function () {
+            // 显示 word-table-container
+            document.querySelector('.word-table-container').style.display = 'block';
+            document.querySelector('.file-input-container').style.display = 'block';
+            // 隐藏 game-container
+            document.querySelector('.game-container').style.display = 'none';
+            document.getElementById('resetSelectionBtn').style.display = 'none';
+            document.getElementById('startGameBtn').textContent = 'ready?go!';
+
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const textData = `单元,英文,中文
+Unit1,cottage,（尤指）村舍，小别墅
+Unit1,farmhouse,农场住宅，农舍
+Unit1,mobile,可移动的
+Unit1,mobile home,活动住房
+Unit1,town,镇，市镇
+Unit1,town house,联排式住宅
+Unit1,hundred,许多，大量；一百
+Unit1,study,书房
+Unit1,relaxing,令人放松的，轻松的
+Unit1,bedroom,卧室
+Unit1,own,自己的，本人的
+Unit1,south,南方；南方的；向南
+Unit1,balcony,阳台
+Unit1,view,风景；看法
+Unit1,mile,英里
+Unit1,relaxing,放松，休息
+Unit1,living room,客厅，起居室
+Unit1,ahlan,你好（阿拉伯语问候语）
+Unit1,village,村庄，村镇
+Unit1,carpet,地毯
+Unit1,next to,紧邻，在...近旁
+Unit1,yard,院子
+Unit1,hen,母鸡
+Unit1,collect,收集，采集
+Unit1,firework,烟火，烟花
+Unit1,BBQ,户外烧烤；烤架
+Unit1,zero,零
+Unit1,square,平方
+Unit1,metre,米（AmE meter）
+Unit1,square metre,平方米
+Unit1,number,号码；数字；数量
+Unit1,million,一百万
+Unit1,calendar,历法，日历
+Unit1,lunar calendar,农历，阴历
+Unit1,seaside,海边，海滨
+Unit1,stone,石头；石块
+Unit1,seagrass,海草
+Unit1,hold,承受住，坚持住
+Unit1,hold up,支撑得住
+Unit1,wind,风，气流
+Unit1,south-west,西南方；西南方的；向西南方
+Unit1,bamboo,竹，竹子
+Unit1,ground,底层，一楼
+Unit1,grassland,草原，草地，草场
+Unit1,tent,帐篷
+Unit1,wood,木，木头
+Unit1,build,建筑，建造
+Unit1,fishing,钓鱼，捕鱼业（或活动）
+Unit1,dry,干燥的，干的
+Unit1,ride,骑，驾驶；搭乘；短途旅程
+Unit1,centre,（市镇的）中心区；中心
+Unit1,smell,闻，嗅（气味）；气味
+Unit1,sky,天空
+Unit2,neighbourhood,街区；邻近的地方
+Unit2,officer,高级职员，官员
+Unit2,police officer,警察，警员
+Unit2,station,站，所，局
+Unit2,police station,警察局，派出所
+Unit2,restaurant,餐厅，餐馆
+Unit2,neighbour,邻居
+Unit2,above,在（或向）...上面/在（向）上面
+Unit2,lawyer,律师
+Unit2,law,法律，法规，规则
+Unit2,community,社区
+Unit2,from time to time,偶尔，不时
+Unit2,volunteer,志愿者/自愿做，义务做，无偿做
+Unit2,laptop,笔记本电脑
+Unit2,engineer,工程师
+Unit2,check,检查，核查
+Unit2,broken,出了毛病的，破损的
+Unit2,someone,某人
+Unit2,repair,修理
+Unit2,anyone,任何人
+Unit2,college,学院；（美）大学
+Unit2,willing,愿意，乐意
+Unit2,be willing to do sth,乐意做某事
+Unit2,tidy,使整洁，整理
+Unit2,such,如此；这样的
+Unit2,any time,在任何时候
+Unit2,pick up,捡起，拾起
+Unit2,rubbish,垃圾，废弃物
+Unit2,bench,长椅
+Unit2,if,如果
+Unit2,in a hurry,匆忙
+Unit2,anything,任何事物
+Unit2,invite,邀请
+Unit2,exchange,交流
+Unit2,exchange student,交换生
+Unit2,notice,通知
+Unit2,information,信息，消息
+Unit2,below,在（或到）下面/在（或到）...下面
+Unit2,fever,发烧，狂热
+Unit2,sore,（发炎）疼痛的，酸痛的
+Unit2,throat,咽喉，喉咙
+Unit2,trouble,问题，困难；麻烦/麻烦；折磨；使烦恼
+Unit2,washing machine,洗衣机
+Unit2,fridge,冰箱
+Unit2,deal with,处理，应付
+Unit2,wonder,琢磨，想知道
+Unit2,able,能够
+Unit2,post,发布；邮寄/帖子，博文；邮件
+Unit2,raise,筹募
+Unit2,organize,组织；安排
+Unit2,give away,赠送；分发
+Unit3,kilometre,千米
+Unit3,wonder,奇迹，奇观；惊奇
+Unit3,Olympic,奥林匹克运动会的
+Unit3,object,物品，东西
+Unit3,past,过去
+Unit3,present,现在
+Unit3,shall,（表示提出或征求意见）；将要，将会
+Unit3,attract,招引；吸引
+Unit3,capital,首都，首府
+Unit3,show sb around,领某人参观
+Unit3,once,曾经
+Unit3,palace,宫殿
+Unit3,emperor,皇帝
+Unit3,ancient,古代的
+Unit3,treasure,珍宝，珍品；财富
+Unit3,worth,值得，有价值；值...钱
+Unit3,be well worth,很值得
+Unit3,visitor,游客，来访者
+Unit3,raise,提升，举起，提起
+Unit3,national,国家的
+Unit3,flag,旗
+Unit3,square,正方形；广场
+Unit3,side,一侧，一边
+Unit3,courtyard,庭院，天井
+Unit3,taste,体验，尝试；味道
+Unit3,local,当地的/地方的；本地人
+Unit3,theatre,戏院，剧场
+Unit3,interest,吸引力，趣味；兴趣
+Unit3,place of interest,名胜
+Unit3,form,类型，种类；形式
+Unit3,stadium,体育场，运动场
+Unit3,date from,追溯到，始于
+Unit3,shopkeeper,店主
+Unit3,smile,微笑/微笑着说；微笑，笑容
+Unit3,sandwich,三明治
+Unit3,leaf,叶子（pl. leaves）
+Unit3,wave,飘动，摇晃/挥手；波浪
+Unit3,roof,屋顶
+Unit3,cage,笼子
+Unit3,lie,躺，平卧；位于
+Unit3,row,划（船）
+Unit3,high,有某高度的/高
+Unit3,golden,金色的；美好的
+Unit3,shape,形状
+Unit3,recommend,推荐；建议
+Unit3,tower,塔
+Unit3,along,沿着
+Unit3,take in,吸入
+Unit3,sunset,日落，傍晚
+Unit3,fantastic,极好的，了不起的
+Unit3,fish and chips,炸鱼薯条
+Unit3,British,英国（人）的
+Unit3,tool,工具
+Unit3,end,终止，结尾；尽头
+Unit3,set,落（下）
+Unit3,everything,一切，每件事
+Unit3,seem,似乎，看起来
+Unit4,folk,传统民间的，民俗的
+Unit4,china,瓷器
+Unit4,clay,黏土，陶土
+Unit4,teapot,茶壶
+Unit4,taste,有…味道
+Unit4,woodcarving,木雕，木雕品
+Unit4,even,甚至，即使
+Unit4,carve,雕刻
+Unit4,scene,场面；现场；（戏剧等的）场
+Unit4,craft,手艺，工艺
+Unit4,quickly,迅速地
+Unit4,scissors,剪刀
+Unit4,knife,刀（pl. knives）
+Unit4,add,补充说；添加
+Unit4,practice,练习，训练
+Unit4,landscape,景色；风景画
+Unit4,paper-cut,剪纸（作品）
+Unit4,express,表达，表示
+Unit4,happiness,幸福，快乐
+Unit4,couple,夫妇
+Unit4,hand,交，递给
+Unit4,mean,表示...的意思；意味着
+Unit4,alive,活着；有活力
+Unit4,warmth,温暖
+Unit4,still,还是，仍然
+Unit4,mine,我的
+Unit4,hers,她的
+Unit4,yours,你的，您的，你们的
+Unit4,ours,我们的
+Unit4,theirs,他们（她们，它们）的所有物
+Unit4,his,他的
+Unit4,postcard,明信片
+Unit4,Chinese knot,中国结
+Unit4,figure,（人或动物的）雕像，塑像
+Unit4,mould,模具
+Unit4,simple,简单的；简朴的
+Unit4,opera,歌剧
+Unit4,outdoor,室外的，户外的
+Unit4,ordinary,普通的，平常的
+Unit4,everyday,日常的，每天的
+Unit4,creative,有创造力的；创造性的
+Unit4,craftsperson,工匠，手艺人（pl. craftspeople）
+Unit4,respect,尊敬，尊重
+Unit4,spirit,精神
+Unit4,handicraft,手工艺品；手工艺
+Unit4,basic,基本的；初级的
+Unit4,cultural,文化的
+Unit4,value,价值
+Unit4,inkstick,墨（条）
+Unit4,among,在...中，...之一
+Unit4,largely,主要地，在很大程度上
+Unit4,painter,画家
+Unit4,pine,松木；松树
+Unit4,main,主要的，最重要的
+Unit4,itself,它本身
+Unit4,quality,品质，质量；人品，素质
+Unit5,bat,蝙蝠
+Unit5,butterfly,蝴蝶
+Unit5,honeybee,蜜蜂
+Unit5,ant,蚂蚁
+Unit5,wing,翅膀，翼
+Unit5,taste,尝，品；吃，喝
+Unit5,awake,醒着
+Unit5,up to,达到（某数量、程度等），至多有
+Unit5,insect,昆虫
+Unit5,lift,举起
+Unit5,times,倍
+Unit5,weight,重量
+Unit5,hole,孔洞
+Unit5,worker,工蜂；工人
+Unit5,gram,克
+Unit5,honey,蜂蜜
+Unit5,snail,蜗牛
+Unit5,trick,把戏
+Unit5,stick,枝条
+Unit5,bite,咬
+Unit5,fight,打架
+Unit5,look after,照料
+Unit5,fur,（动物的）软毛；毛皮
+Unit5,purr,（猫）发出呼噜声
+Unit5,forget,忘记做；遗忘
+Unit5,lonely,孤独的
+Unit5,parrot,鹦鹉
+Unit5,sound,声音
+Unit5,alone,独自；单独
+Unit5,corner,角落；墙角；街角；角
+Unit5,touch,触摸，碰
+Unit5,goldfish,"金鱼（pl. goldfish, goldfishes）"
+Unit5,afraid,担心；害怕，恐惧
+Unit5,giraffe,长颈鹿
+Unit5,bone,骨头
+Unit5,neck,颈，脖子
+Unit5,snake,蛇
+Unit5,tip,实用的提示
+Unit5,human,人
+Unit5,radar,雷达
+Unit5,allow,使可能；允许
+Unit5,safely,安全地
+Unit5,echo,回声
+Unit5,cheer,鼓舞/欢呼，加油
+Unit5,cheer(sb) up,（使）变得高兴，振奋起来
+Unit5,hard-working,辛勤的
+Unit5,useful,有用的
+Unit5,save,拯救，救助
+Unit5,correct,正确的
+Unit5,relationship,关系
+Unit5,care for,照料
+Unit5,guinea pig,天竺鼠
+Unit5,round,圆形的
+Unit5,name,命名
+Unit5,loud,大声的
+Unit5,noise,声音，噪声
+Unit5,down,沮丧，情绪低落
+Unit6,ocean,海洋
+Unit6,cover,占（一片面积）；覆盖；遮盖
+Unit6,surface,地面；表面
+Unit6,desert,沙漠，荒漠
+Unit6,forest,森林
+Unit6,rock,岩石
+Unit6,ground,地面
+Unit6,plain,平原
+Unit6,flat,平坦的，平的
+Unit6,land,陆地；土地
+Unit6,rise,发源；上升；提高/上升；增强；提高
+Unit6,fresh,淡的，无盐的；新鲜的
+Unit6,farming,耕种，务农
+Unit6,powerful,力量大的；有影响力的
+Unit6,flood,泛滥，淹没/洪水
+Unit6,destroy,破坏，摧毁
+Unit6,nothing,没有什么
+Unit6,mostly,主要地，通常
+Unit6,sand,沙，沙子
+Unit6,nobody,没有人
+Unit6,conditions,环境，条件
+Unit6,a few,有些，几个
+Unit6,survive,生存，存活
+Unit6,huge,巨大的
+Unit6,planet,行星
+Unit6,be home to,是...的家园
+Unit6,produce,生产
+Unit6,oxygen,氧，氧气
+Unit6,breathe,呼吸/呼出
+Unit6,northern,北方的，北部的
+Unit6,Arctic char,红点鲑
+Unit6,campfire,篝火，营火
+Unit6,camp,露营
+Unit6,corn,谷物；（美）玉米
+Unit6,landform,地貌，地形
+Unit6,rainbow,彩虹
+Unit6,treat,乐事；款待
+Unit6,north-west,西北；西北方的；向西北方
+Unit6,unusual,不寻常的
+Unit6,sandstone,砂岩
+Unit6,strange,奇怪的；陌生的
+Unit6,form,（使）出现，产生
+Unit6,power,力量；电力供应
+Unit6,rainforest,（热带）雨林
+Unit6,waterfall,瀑布
+Unit6,cloud,云，云彩
+Unit6,sunrise,日出
+Unit6,wonderland,非常奇妙的地方；（童话中的）仙境，奇境
+Unit6,several,几个，一些
+Unit6,path,小路，小径
+Unit6,step,台阶，梯级；脚步声；步骤
+Unit6,cable car,缆车
+Unit6,overnight,在晚上；一夜之间
+Unit7,cycle,骑自行车
+Unit7,horse riding,骑马
+Unit7,skate,滑冰，溜冰/冰鞋
+Unit7,break,休息
+Unit7,take a break,休息
+Unit7,balance,平衡能力；平衡
+Unit7,might,可能
+Unit7,on one's own,独自；独立地
+Unit7,ski,滑雪（运动）
+Unit7,would,将会，就会（带出想象的结果）
+Unit7,experience,（一次）经历；经验
+Unit7,set off,出发
+Unit7,follow,遵循/跟随
+Unit7,detail,具体情况；细节
+Unit7,countryside,农村，乡村
+Unit7,lost,迷路的；丢失的
+Unit7,none,没有一个
+Unit7,worried,担心的，发愁的
+Unit7,luckily,幸好，幸运地
+Unit7,arrive,到达
+Unit7,app,应用软件
+Unit7,find out,查明，弄清（情况）
+Unit7,enjoyable,令人愉快的
+Unit7,proud,自豪的
+Unit7,be proud of,为...感到骄傲
+Unit7,hike,远足，徒步旅行
+Unit7,noon,正午，中午
+Unit7,later,后来，随后
+Unit7,at first,起初
+Unit7,little by little,缓慢地，逐渐地
+Unit7,picnic,野餐
+Unit7,because of,因为
+Unit7,campsite,野营地
+Unit7,childhood,童年，幼年
+Unit7,relaxed,放松的，冷静的
+Unit7,ever,在任何时候；曾经
+Unit7,focus,集中（注意力、精力等）/聚焦（于）
+Unit7,mind,头脑；思考能力；聪明人
+Unit7,roll,使...成球状（或管状）/卷，卷轴
+Unit7,roll out,展开
+Unit7,sleeping bag,睡袋
+Unit7,fall,进入（某状态）；落下；掉落；倒下
+Unit7,asleep,睡着
+Unit7,chance,机会；可能性
+Unit7,first-time,首次的，第一次的
+Unit7,camper,露营者
+Unit7,medicine,药物；医学
+Unit7,safety,安全；平安；安全处所
+Unit7,birdwatching,观鸟
+Unit7,binoculars,双筒望远镜
+Unit7,clearly,清楚地；明显地；明白地
+Unit7,had better,应该，最好
+Unit7,thirsty,口渴的
+Unit7,no problem,没什么，不客气；没问题
+Unit7,camera,照相机
+Unit7,narrow,狭窄的
+Unit7,support,帮助；支持；支撑
+Unit8,fisherman,渔民，钓鱼爱好者（pl. fishermen）
+Unit8,adventure,历险，奇遇
+Unit8,partner,搭档
+Unit8,magic,有魔力的；神奇的/魔法；魔术；魔力
+Unit8,paintbrush,画笔
+Unit8,magical,有魔力的；奇妙的
+Unit8,collection,作品集；收集物
+Unit8,fantasy,奇幻小说；幻想，想象
+Unit8,classic,经典作品，名著/最优秀的；典型的；典雅的
+Unit8,god,神
+Unit8,character,人物，角色
+Unit8,lend,借给，借出
+Unit8,pass,通过；结束；传递
+Unit8,pass by,经过；通过
+Unit8,hit,碰撞；击打；打击
+Unit8,herself,她自己
+Unit8,low,低的
+Unit8,locked,锁住的
+Unit8,fit,适合
+Unit8,notice,注意到/留意
+Unit8,lock,锁
+Unit8,happen,发生，出现
+Unit8,series,连续剧；（书、文章等的）系列；一系列
+Unit8,factory,工厂，制造厂
+Unit8,company,公司
+Unit8,just,刚才，方才
+Unit8,whether,是否
+Unit8,be born,出生；出现
+Unit8,lose,失去，丧失
+Unit8,publish,出版/发表（作品）
+Unit8,die,死，死亡；消失
+Unit8,guide,指南，导游
+Unit8,set,为...设置背景于；创立
+Unit8,real,真实的；实际存在的
+Unit8,imagine,想象
+Unit8,while,在...期间，与...同时/一段时间，一会儿
+Unit8,plot,故事情节
+Unit8,fairy,小精灵，仙子
+Unit8,nurse,保姆，护士
+Unit8,happily,高兴地
+Unit8,finally,最终
+Unit8,walking stick,手杖，拐棍
+Unit8,peach,桃，桃子
+Unit8,fill,（使）充满，填满
+Unit8,give up,放弃
+Unit8,in the face of,面对（困难等）
+Unit8,task,任务，工作
+Unit8,goal,目标
+Unit8,solve,解决，解答
+Unit8,note,便条，笔记，音符
+Unit8,suddenly,突然
+Unit8,decide,决定
+Unit8,enter,进入
+Unit8,towards,向，朝
+Unit8,too ... to,太...而不能
+Unit8,reach,够得着；抵达；实现；达到
+Unit8,fail,失败，未能（做到）；不及格
+`;
+            loadWordData(textData);
+        }
+        );
+
+        // 监听 unitSelect 的变化
+        document.getElementById('unitSelect').addEventListener('change', function() {
+            const selectedUnit = this.value; // 获取所选单元
+            filterWordList(selectedUnit); // 调用过滤函数
+        });
+
+        // 过滤单词列表的函数
+        function filterWordList(selectedUnit) {
+            const tbody = document.getElementById('wordTableBody');
+            tbody.innerHTML = ''; // 清空当前单词列表
+
+            // 根据所选单元过滤单词对
+            const filteredPairs = selectedUnit === 'all' ? wordPairs : wordPairsByUnit.get(selectedUnit) || [];
+
+            filteredPairs.forEach(([english, chinese]) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><input type="checkbox" class="word-checkbox"></td>
+                    <td>${selectedUnit}</td>
+                    <td>${english}</td>
+                    <td>${chinese}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // 更新复选框的事件监听器
+            updateCheckboxListeners();
+        }
+
+        // 更新复选框的事件监听器
+        function updateCheckboxListeners() {
+            const checkboxes = document.querySelectorAll('.word-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const row = this.closest('tr');
+                    if (this.checked) {
+                        row.classList.add('selected-row');
+                    } else {
+                        row.classList.remove('selected-row');
+                    }
+                });
+            });
+        }
+
+    </script>
+</body>
+
+</html>
