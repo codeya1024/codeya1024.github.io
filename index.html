@@ -473,9 +473,53 @@
                 const isCorrect = wordPairs.some(pair => pair[0] === item.english && pair[1] === item.chinese);
                 item.line.style.borderColor = isCorrect ? 'green' : 'red';
             });
-        await new Promise(resolve => setTimeout(resolve, 10));
             
+            await new Promise(resolve => setTimeout(resolve, 10));
         }
+
+        function triggerFireworks() {
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+            const particles = 50; // 增加粒子数量
+            const angleIncrement = (Math.PI * 2) / particles;
+
+            // 获取窗口的中心位置
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+
+            for (let i = 0; i < particles; i++) {
+                const angle = i * angleIncrement;
+                const velocity = Math.random() * 2 + 1;
+                const color = colors[Math.floor(Math.random() * colors.length)];
+
+                const particle = document.createElement('div');
+                particle.style.position = 'absolute';
+                particle.style.width = '8px'; // 增加粒子大小
+                particle.style.height = '8px'; // 增加粒子大小
+                particle.style.backgroundColor = color;
+                particle.style.borderRadius = '50%';
+                particle.style.left = `${centerX}px`; // 使用窗口中心的 X 坐标
+                particle.style.top = `${centerY}px`;  // 使用窗口中心的 Y 坐标
+                particle.style.pointerEvents = 'none';
+                particle.style.zIndex = '1000'; // 确保粒子在最上层
+                document.body.appendChild(particle);
+
+                const dx = Math.cos(angle) * velocity;
+                const dy = Math.sin(angle) * velocity;
+
+                let life = 100;
+                const interval = setInterval(() => {
+                    if (life <= 0) {
+                        clearInterval(interval);
+                        document.body.removeChild(particle);
+                    } else {
+                        particle.style.left = `${parseFloat(particle.style.left) + dx}px`;
+                        particle.style.top = `${parseFloat(particle.style.top) + dy}px`;
+                        life--;
+                    }
+                }, 16);
+            }
+        }
+
         function calculateResults() {
             totalWords = wordPairs.length; // 假设 wordPairs 存储了所有单词对
             successfulMatches = lines.filter(item => {
@@ -505,9 +549,12 @@
                 <button id="closeResultBtn">关闭</button>
             `;
             document.body.appendChild(resultDiv);
+            // 触发烟花效果
+            triggerFireworks();
 
             document.getElementById('closeResultBtn').addEventListener('click', () => {
                 document.body.removeChild(resultDiv);
+                
             });
 
             // // 显示结果
@@ -678,7 +725,6 @@
             document.querySelector('.game-container').style.display = 'none';
             document.getElementById('resetSelectionBtn').style.display = 'none';
             document.getElementById('startGameBtn').textContent = 'ready?go!';
-
         });
 
         document.addEventListener('DOMContentLoaded', function () {
